@@ -2,7 +2,7 @@
 <html lang="en" data-paper="sepia" data-font="garamond" data-size="m">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <title>Verse</title>
   <meta name="description" content="A journal in verse. Write about a moment, a thought or a memory, note how you felt, and publish it to a volume on your shelf.">
   <meta name="theme-color" content="#e7dcc6">
@@ -28,6 +28,14 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
         </button>
       </header>
+      <div id="install-card" class="install-card" hidden>
+        <span class="install-icon" aria-hidden="true">V</span>
+        <p class="install-text"><strong>Install Verse</strong> Keep it with your other apps. It opens full screen and works offline.</p>
+        <div class="install-actions">
+          <button id="install-later" class="text-btn" type="button">Not now</button>
+          <button class="pill-btn pill-btn--small" type="button" data-install>Install</button>
+        </div>
+      </div>
       <label class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg>
         <span class="visually-hidden">Search your verses</span>
@@ -182,6 +190,12 @@
           <label><input type="radio" name="size" value="l" aria-label="Large"><span class="size-l">Aa</span></label>
         </div>
       </fieldset>
+      <div id="install-row" class="field" hidden>
+        <span class="field-label">This phone</span>
+        <div class="backup-actions">
+          <button class="outline-btn" type="button" data-install>Install Verse as an app</button>
+        </div>
+      </div>
       <div class="field">
         <span class="field-label">Backups</span>
         <p id="backup-note" class="field-note"></p>

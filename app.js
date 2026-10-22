@@ -247,6 +247,11 @@
     toastTimer = setTimeout(() => el.classList.remove('is-on'), 2800);
   }
 
+  // A light tick, like a native Android control. Phones without vibration ignore it.
+  function haptic(pattern = 8) {
+    try { navigator.vibrate?.(pattern); } catch { /* ignore */ }
+  }
+
   function requestPersistence() {
     try { navigator.storage?.persist?.().catch(() => {}); } catch { /* ignore */ }
   }
@@ -287,8 +292,10 @@
   let ignorePop = false;
 
   const writer = $('#writer');
+  const dialogs = ['#settings', '#publish', '#vol-edit', '#confirm'].map((s) => $(s));
   const isWriting = () => !writer.hidden;
-  const layered = () => isWriting() || view === 'volume';
+  const openDialog = () => dialogs.find((d) => d.open);
+  const layered = () => Boolean(openDialog()) || isWriting() || view === 'volume';
 
   function setView(next) {
     view = next;
@@ -297,8 +304,8 @@
     $('#volume').hidden = next !== 'volume';
   }
 
-  // One extra history entry while a volume or the writer is open,
-  // so the phone's back gesture closes it instead of leaving the app.
+  // One extra history entry while a sheet, a volume or the writer is open,
+  // so Android's back gesture closes it instead of leaving the app.
   function holdHistory() {
     if (!framed && history.state?.verse !== 'layer') history.pushState({ verse: 'layer' }, '');
   }
@@ -313,7 +320,9 @@
       ignorePop = false;
       return;
     }
-    if (isWriting()) closeWriter();
+    const sheet = openDialog();
+    if (sheet) sheet.close();
+    else if (isWriting()) closeWriter();
     else if (view === 'volume') closeVolume();
     if (layered()) holdHistory();
   });
@@ -694,6 +703,7 @@
 
   function pick(field, value) {
     draft[field] = draft[field] === value ? null : value;
+    haptic();
     renderChoices();
     persist();
     refreshWriterChrome();
@@ -736,7 +746,7 @@
       : 'Saved as you write';
   }
 
-  function openWriter(id, { volumeId = null } = {}) {
+  function openWriter(id, { volumeId = null, prefill = null } = {}) {
     closeDialogs();
     if (view === 'home' && !isWriting()) homeScroll = window.scrollY;
     current = id ? state.verses.find((p) => p.id === id) || null : null;
@@ -747,6 +757,11 @@
     draft = { align: 'center', feeling: current?.feeling || null, kind: current?.kind || null };
     setAlign(current ? current.align : state.prefs.align);
     renderChoices();
+    if (prefill) {
+      titleInput.value = prefill.title;
+      bodyInput.value = prefill.body;
+      persist();
+    }
 
     writer.hidden = false;
     document.body.classList.add('is-writing');
@@ -754,7 +769,7 @@
     growBody();
     refreshWriterChrome();
     holdHistory();
-    if (!current) bodyInput.focus({ preventScroll: true });
+    if (!id) bodyInput.focus({ preventScroll: true });
   }
 
   function persist() {
@@ -861,7 +876,10 @@
     current = null;
     hideWriter({ keepHistory: true });
     openVolume(volId, { at: verse.id, fresh: moving });
-    if (moving) toast(`Published in ${vol.title} as page ${pageOf(verse)}`);
+    if (moving) {
+      haptic([12, 70, 18]);
+      toast(`Published in ${vol.title} as page ${pageOf(verse)}`);
+    }
   }
 
   function unpublish() {
@@ -931,8 +949,6 @@
 
   /* ---------------- Sheets ---------------- */
 
-  const dialogs = ['#settings', '#publish', '#vol-edit', '#confirm'].map((s) => $(s));
-
   function closeDialogs() {
     for (const d of dialogs) if (d.open) d.close();
   }
@@ -940,10 +956,13 @@
   function openSheet(dialog) {
     closeDialogs();
     dialog.showModal();
+    holdHistory();
   }
 
   // Tapping the dimmed area outside a sheet closes it.
   for (const d of dialogs) {
+    // Let whatever opens next (another sheet, a volume) claim the history entry first.
+    d.addEventListener('close', () => setTimeout(releaseHistory, 0));
     d.addEventListener('click', (e) => {
       if (e.target !== d) return;
       const r = d.getBoundingClientRect();
@@ -1106,11 +1125,11 @@
     return new File([JSON.stringify(data, null, 2)], `verse-backup-${day}.json`, { type: 'application/json' });
   }
 
-  function markBackedUp() {
+  function markBackedUp(where = '') {
     state.lastBackup = nowISO();
     save();
     closeDialogs();
-    toast('Backup saved');
+    toast(`Backup saved${where}`);
   }
 
   async function exportBackup() {
@@ -1130,7 +1149,7 @@
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
-    markBackedUp();
+    markBackedUp(' to your Downloads');
   }
 
   $('#backup-btn').addEventListener('click', exportBackup);
@@ -1224,6 +1243,44 @@
     if (vol) buildPrintBook(vol);
   });
 
+  /* ---------------- Installing ---------------- */
+
+  // Chrome on Android offers to install Verse as an app; keep the offer for our own button.
+  let installOffer = null;
+  const installed = () => window.matchMedia('(display-mode: standalone)').matches;
+
+  function updateInstall() {
+    $('#install-row').hidden = !installOffer;
+    $('#install-card').hidden = !installOffer || ui.installLater === true;
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    if (installed()) return;
+    installOffer = e;
+    updateInstall();
+  });
+  window.addEventListener('appinstalled', () => {
+    installOffer = null;
+    updateInstall();
+    toast('Verse is installed. You’ll find it with your other apps.');
+  });
+  for (const b of document.querySelectorAll('[data-install]')) {
+    b.addEventListener('click', async () => {
+      if (!installOffer) return;
+      const offer = installOffer;
+      installOffer = null;
+      closeDialogs();
+      updateInstall();
+      try { await offer.prompt(); } catch { /* ignore */ }
+    });
+  }
+  $('#install-later').addEventListener('click', () => {
+    ui.installLater = true;
+    saveUI();
+    updateInstall();
+  });
+
   /* ---------------- First run ---------------- */
 
   function seedSamples() {
@@ -1271,10 +1328,39 @@
       state.welcomed = true;
       save();
       renderHome();
+      launch();
     }, { once: true });
   }
 
+  // Opened from the "Write a verse" shortcut, or with text shared from another app.
+  function launch() {
+    const params = new URLSearchParams(location.search);
+    const shared = ['title', 'text', 'url'].some((k) => params.get(k));
+    if (!shared && !params.has('write')) return;
+    if (!framed) history.replaceState(null, '', location.pathname);
+    if (!shared) {
+      openWriter();
+      return;
+    }
+    const body = [params.get('text'), params.get('url')].filter(Boolean).join('\n');
+    openWriter(null, { prefill: { title: body ? params.get('title') || '' : '', body: body || params.get('title') || '' } });
+    toast('Saved in your journal');
+  }
+
   /* ---------------- Keyboard ---------------- */
+
+  // Android shrinks the page while the on-screen keyboard is up; notice it so the
+  // tab bar can step aside. (Closing the keyboard doesn't always blur the field.)
+  let fullHeight = window.innerHeight;
+  function checkKeyboard() {
+    fullHeight = Math.max(fullHeight, window.innerHeight);
+    document.documentElement.classList.toggle('keyboard-open', window.innerHeight < fullHeight - 120);
+  }
+  window.addEventListener('resize', checkKeyboard);
+  screen.orientation?.addEventListener('change', () => {
+    fullHeight = 0;
+    setTimeout(checkKeyboard, 300);
+  });
 
   document.addEventListener('keydown', (e) => {
     if (document.querySelector('dialog[open]')) return;
@@ -1311,11 +1397,7 @@
   setView('home');
   renderHome();
   if (!state.welcomed) welcome();
-  else if (new URLSearchParams(location.search).has('write')) {
-    // The home-screen shortcut opens straight onto a blank page.
-    if (!framed) history.replaceState(null, '', location.pathname);
-    openWriter();
-  }
+  else launch();
   if (!storageOK && !framed) toast('This browser won’t let Verse save. Try opening it outside private browsing.');
 
   if ('serviceWorker' in navigator && !framed && (location.protocol === 'https:' || location.hostname === 'localhost')) {

@@ -32,6 +32,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-monochrome-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "monochrome"
     }
   ],
   "shortcuts": [
@@ -46,6 +52,45 @@
           "type": "image/png"
         }
       ]
+    }
+  ],
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "screenshots": [
+    {
+      "src": "screenshots/journal.jpg",
+      "sizes": "896x1996",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Your journal: every verse, with how you felt"
+    },
+    {
+      "src": "screenshots/writer.jpg",
+      "sizes": "896x1996",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Write a verse and note your feeling in one tap"
+    },
+    {
+      "src": "screenshots/shelf.jpg",
+      "sizes": "896x1996",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "A shelf of cloth-bound volumes"
+    },
+    {
+      "src": "screenshots/volume.jpg",
+      "sizes": "896x1996",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Each published verse becomes a page"
     }
   ]
 }
