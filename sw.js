@@ -1,6 +1,6 @@
 /* Verse offline support: keeps a copy of the app on the phone so it opens without a connection.
    Bump VERSION whenever any file below changes, so phones pick up the new copy. */
-const VERSION = 'verse-v1';
+const VERSION = 'verse-v2';
 const FILES = [
   './',
   './index.html',

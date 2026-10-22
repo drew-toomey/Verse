@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Verse</title>
-  <meta name="description" content="A free verse journal. Every verse you write becomes the next page of your own book of poetry.">
+  <meta name="description" content="A journal in verse. Write about a moment, a thought or a memory, note how you felt, and publish it to a volume on your shelf.">
   <meta name="theme-color" content="#e7dcc6">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,26 +17,85 @@
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
 </head>
-<body>
-  <header class="topbar">
-    <button id="menu-btn" class="icon-btn" type="button" aria-label="Menu" aria-haspopup="dialog">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h11M4 17h14"/></svg>
+<body data-view="home">
+
+  <!-- Home: the journal and the shelf, with a tab bar -->
+  <div id="home" class="home">
+    <section id="tab-journal" class="tab" aria-labelledby="journal-heading">
+      <header class="tab-head">
+        <h1 id="journal-heading" class="tab-title">Journal</h1>
+        <button class="icon-btn" type="button" data-open-settings aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+        </button>
+      </header>
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></svg>
+        <span class="visually-hidden">Search your verses</span>
+        <input id="search" type="search" placeholder="Search your verses" autocomplete="off" enterkeyhint="search">
+      </label>
+      <div class="filters" role="group" aria-label="Show">
+        <button class="chip" type="button" data-filter="all" aria-pressed="true">All</button>
+        <button class="chip" type="button" data-filter="unpublished" aria-pressed="false">Unpublished</button>
+        <button class="chip" type="button" data-filter="published" aria-pressed="false">In a volume</button>
+      </div>
+      <div id="journal" class="journal"></div>
+    </section>
+
+    <section id="tab-shelf" class="tab" aria-labelledby="shelf-heading" hidden>
+      <header class="tab-head">
+        <h1 id="shelf-heading" class="tab-title">Shelf</h1>
+        <button class="icon-btn" type="button" data-open-settings aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+        </button>
+      </header>
+      <div class="shelf-bar">
+        <p id="shelf-summary" class="shelf-summary"></p>
+        <button id="sort-btn" class="sort-btn" type="button">Recent</button>
+      </div>
+      <div id="shelf" class="shelf"></div>
+    </section>
+
+    <nav class="tabbar" aria-label="Sections">
+      <button class="tab-btn" type="button" data-tab="journal" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h11a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H6z"/><path d="M6 3.5v17"/><path d="M9.5 8h5M9.5 11h5"/></svg>
+        <span>Journal</span>
+      </button>
+      <button id="write-btn" class="write-btn" type="button" aria-label="Write a new verse">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 3.5C12.5 4 7 9.5 6 17.5"/><path d="M20 3.5c-.5 7-5.5 12.5-13.2 13.4"/><path d="M9.5 13.8 14.5 9"/><path d="M6 17.5 4 21"/></svg>
+      </button>
+      <button class="tab-btn" type="button" data-tab="shelf">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 4.5h3v15h-3zM8.5 6.5h3v13h-3z"/><path d="m13 7.2 2.9-.8 3.6 13.4-2.9.8z"/><path d="M3 20.5h18"/></svg>
+        <span>Shelf</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- A volume, read as a book -->
+  <div id="volume" class="volume" hidden>
+    <header class="topbar">
+      <button id="vol-back" class="icon-btn" type="button" aria-label="Back to the shelf">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <button id="title-btn" class="topbar-title" type="button" title="Go to the cover"></button>
+      <div class="topbar-actions">
+        <button id="vol-menu" class="icon-btn" type="button" aria-label="About this volume">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/></svg>
+        </button>
+        <button id="vol-write" class="icon-btn" type="button" aria-label="Write a verse for this volume">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 3.5C12.5 4 7 9.5 6 17.5"/><path d="M20 3.5c-.5 7-5.5 12.5-13.2 13.4"/><path d="M9.5 13.8 14.5 9"/><path d="M6 17.5 4 21"/></svg>
+        </button>
+      </div>
+    </header>
+    <main id="book" class="book" aria-label="Volume" aria-roledescription="book" tabindex="-1"></main>
+    <button id="turn-prev" class="turn turn--prev" type="button" aria-label="Previous page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
-    <button id="title-btn" class="topbar-title" type="button" title="Go to the cover">Verse</button>
-    <button id="write-btn" class="icon-btn" type="button" aria-label="Write a new verse">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 3.5C12.5 4 7 9.5 6 17.5"/><path d="M20 3.5c-.5 7-5.5 12.5-13.2 13.4"/><path d="M9.5 13.8 14.5 9"/><path d="M6 17.5 4 21"/></svg>
+    <button id="turn-next" class="turn turn--next" type="button" aria-label="Next page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
     </button>
-  </header>
+  </div>
 
-  <main id="book" class="book" aria-label="Your book" aria-roledescription="book" tabindex="-1"></main>
-
-  <button id="turn-prev" class="turn turn--prev" type="button" aria-label="Previous page">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
-  </button>
-  <button id="turn-next" class="turn turn--next" type="button" aria-label="Next page">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
-  </button>
-
+  <!-- The writer -->
   <section id="writer" class="writer" aria-label="Write" hidden>
     <div id="writer-bar" class="writer-bar">
       <button id="writer-close" class="text-btn" type="button">Close</button>
@@ -46,70 +105,59 @@
           <svg class="align-center" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M5 6h14M8 10h8M6 14h12M9 18h6"/></svg>
           <svg class="align-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M5 6h14M5 10h8M5 14h12M5 18h6"/></svg>
         </button>
-        <button id="bind-btn" class="pill-btn pill-btn--small" type="button">Add to book</button>
+        <button id="publish-btn" class="pill-btn pill-btn--small" type="button">Publish</button>
       </div>
     </div>
     <div class="writer-sheet">
+      <p id="writer-date" class="writer-date"></p>
       <label class="visually-hidden" for="poem-title">Title</label>
       <input id="poem-title" class="title-input" type="text" placeholder="Untitled" maxlength="120" autocomplete="off" autocapitalize="words" enterkeyhint="next">
       <div class="flourish" aria-hidden="true"></div>
       <label class="visually-hidden" for="poem-body">Your verse</label>
       <textarea id="poem-body" class="body-input" placeholder="Begin anywhere…" autocapitalize="sentences"></textarea>
-      <p id="writer-meta" class="writer-meta"></p>
-      <button id="delete-btn" class="quiet-btn" type="button">Delete this verse</button>
+
+      <div class="details">
+        <p class="details-label" id="feelings-label">How were you feeling?</p>
+        <div id="feelings" class="feelings" role="group" aria-labelledby="feelings-label"></div>
+        <p class="details-label" id="kinds-label">This verse is about</p>
+        <div id="kinds" class="kinds" role="group" aria-labelledby="kinds-label"></div>
+        <div class="placement">
+          <p id="placement-text" class="placement-text"></p>
+          <button id="placement-btn" class="link-btn" type="button">Publish to a volume</button>
+        </div>
+        <p id="writer-meta" class="writer-meta"></p>
+        <button id="delete-btn" class="quiet-btn" type="button">Delete this verse</button>
+      </div>
     </div>
   </section>
 
+  <!-- First run -->
   <dialog id="welcome" class="welcome" aria-labelledby="welcome-title">
     <form id="welcome-form" class="welcome-inner" method="dialog">
       <p class="welcome-kicker">Welcome to</p>
       <h1 id="welcome-title" class="welcome-title">Verse</h1>
       <div class="flourish" aria-hidden="true"></div>
-      <p class="welcome-lede">Write freely. Give each verse a title, or don’t. When a verse is ready, add it to your book and it becomes the next page.</p>
-      <p id="welcome-preview" class="welcome-note" hidden>This preview includes three sample verses so you can see the book take shape.</p>
-      <label class="field">
-        <span class="field-label">Your book is called</span>
-        <input id="welcome-book" type="text" placeholder="Verse" maxlength="80" autocomplete="off" autocapitalize="words">
-      </label>
+      <p class="welcome-lede">A journal in verse. Write about a moment, a thought or a memory, and note how you felt. When a verse is ready, publish it to a volume on your shelf.</p>
+      <p id="welcome-preview" class="welcome-note" hidden>This preview comes with a few sample verses and volumes so you can see how it fills up.</p>
       <label class="field">
         <span class="field-label">Written by</span>
         <input id="welcome-author" type="text" placeholder="Your name" maxlength="80" autocomplete="name" autocapitalize="words">
       </label>
-      <button class="pill-btn" type="submit">Open the book</button>
+      <label id="welcome-volume-field" class="field">
+        <span class="field-label">Your first volume</span>
+        <input id="welcome-volume" type="text" placeholder="First Verses" maxlength="80" autocomplete="off" autocapitalize="words">
+      </label>
+      <button class="pill-btn" type="submit">Begin</button>
     </form>
   </dialog>
 
-  <dialog id="menu" class="sheet" aria-labelledby="menu-title">
-    <div class="sheet-grip" aria-hidden="true"></div>
-    <h2 id="menu-title" class="sheet-title">Verse</h2>
-    <ul class="menu-list">
-      <li><button class="menu-item" type="button" data-action="contents">Contents <small id="menu-count"></small></button></li>
-      <li><button class="menu-item" type="button" data-action="drafts">Loose pages <small id="menu-drafts"></small></button></li>
-      <li><button class="menu-item" type="button" data-action="settings">The book <small>title, name, type &amp; paper</small></button></li>
-      <li data-needs="files"><button class="menu-item" type="button" data-action="backup">Save a backup <small id="menu-backup"></small></button></li>
-      <li><button class="menu-item" type="button" data-action="restore">Restore a backup <small>from a saved file</small></button></li>
-      <li data-needs="print"><button class="menu-item" type="button" data-action="print">Print the book <small>or save as PDF</small></button></li>
-    </ul>
-    <p id="menu-note" class="sheet-note">Your verses are kept on this device. Save a backup now and then.</p>
-  </dialog>
-
-  <dialog id="drafts" class="sheet" aria-labelledby="drafts-title">
-    <div class="sheet-grip" aria-hidden="true"></div>
-    <h2 id="drafts-title" class="sheet-title">Loose pages</h2>
-    <p id="drafts-empty" class="sheet-note">Unfinished verses rest here until you add them to your book.</p>
-    <ul id="draft-list" class="draft-list"></ul>
-  </dialog>
-
+  <!-- Settings & backups -->
   <dialog id="settings" class="sheet" aria-labelledby="settings-title">
     <div class="sheet-grip" aria-hidden="true"></div>
-    <h2 id="settings-title" class="sheet-title">The book</h2>
+    <h2 id="settings-title" class="sheet-title">Settings</h2>
     <form id="settings-form" class="settings" method="dialog">
       <label class="field">
-        <span class="field-label">Title</span>
-        <input id="set-title" name="title" type="text" placeholder="Verse" maxlength="80" autocomplete="off" autocapitalize="words">
-      </label>
-      <label class="field">
-        <span class="field-label">Author</span>
+        <span class="field-label">Your name, for the covers</span>
         <input id="set-author" name="author" type="text" placeholder="Your name" maxlength="80" autocomplete="name" autocapitalize="words">
       </label>
       <fieldset class="field">
@@ -134,7 +182,57 @@
           <label><input type="radio" name="size" value="l" aria-label="Large"><span class="size-l">Aa</span></label>
         </div>
       </fieldset>
+      <div class="field">
+        <span class="field-label">Backups</span>
+        <p id="backup-note" class="field-note"></p>
+        <div class="backup-actions">
+          <button id="backup-btn" class="outline-btn" type="button" data-needs="files">Save a backup</button>
+          <button id="restore-btn" class="outline-btn" type="button">Restore a backup</button>
+        </div>
+      </div>
       <button class="pill-btn settings-done" type="submit">Done</button>
+    </form>
+  </dialog>
+
+  <!-- Publish a verse to a volume -->
+  <dialog id="publish" class="sheet" aria-labelledby="publish-title">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <h2 id="publish-title" class="sheet-title">Publish to a volume</h2>
+    <ul id="publish-list" class="pick-list"></ul>
+    <button id="publish-new" class="pick-row pick-row--new" type="button">
+      <span class="mini-cover mini-cover--new" aria-hidden="true">+</span>
+      <span class="pick-name">A new volume…</span>
+    </button>
+    <button id="unpublish-btn" class="quiet-btn sheet-quiet" type="button">Keep it in the journal only</button>
+  </dialog>
+
+  <!-- Create or edit a volume -->
+  <dialog id="vol-edit" class="sheet" aria-labelledby="vol-edit-title">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <h2 id="vol-edit-title" class="sheet-title">A new volume</h2>
+    <form id="vol-form" class="vol-form" method="dialog">
+      <div class="vol-form-top">
+        <div id="vol-preview" class="vol-preview" aria-hidden="true"></div>
+        <div class="vol-form-fields">
+          <label class="field">
+            <span class="field-label">Title</span>
+            <input id="vol-title" type="text" placeholder="Summer in Lisbon" maxlength="80" autocomplete="off" autocapitalize="words" required>
+          </label>
+          <label class="field">
+            <span class="field-label">What it holds</span>
+            <input id="vol-note" type="text" placeholder="A season, a place, a person…" maxlength="120" autocomplete="off" autocapitalize="sentences">
+          </label>
+        </div>
+      </div>
+      <fieldset class="field">
+        <legend class="field-label">Binding</legend>
+        <div id="vol-covers" class="cover-swatches"></div>
+      </fieldset>
+      <button id="vol-save" class="pill-btn settings-done" type="submit">Create volume</button>
+      <div id="vol-extra" class="vol-extra">
+        <button id="vol-print" class="quiet-btn" type="button" data-needs="print">Print or save as PDF</button>
+        <button id="vol-delete" class="quiet-btn quiet-btn--danger" type="button">Delete this volume</button>
+      </div>
     </form>
   </dialog>
 

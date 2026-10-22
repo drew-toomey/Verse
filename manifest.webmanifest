@@ -1,7 +1,7 @@
 {
   "name": "Verse",
   "short_name": "Verse",
-  "description": "A free verse journal. Every verse you write becomes the next page of your own book of poetry.",
+  "description": "A journal in verse. Write about a moment, a thought or a memory, note how you felt, and publish it to a volume on your shelf.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
@@ -9,10 +9,43 @@
   "orientation": "any",
   "background_color": "#e7dcc6",
   "theme_color": "#e7dcc6",
-  "categories": ["lifestyle", "productivity", "books"],
+  "categories": [
+    "lifestyle",
+    "productivity",
+    "books"
+  ],
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Write a verse",
+      "short_name": "Write",
+      "url": "./?write",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
 }
