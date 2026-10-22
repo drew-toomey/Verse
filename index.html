@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en" data-paper="sepia" data-font="garamond" data-size="m">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Verse</title>
+  <meta name="description" content="A free verse journal. Every verse you write becomes the next page of your own book of poetry.">
+  <meta name="theme-color" content="#e7dcc6">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Verse">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="preload" href="fonts/eb-garamond-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <button id="menu-btn" class="icon-btn" type="button" aria-label="Menu" aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h11M4 17h14"/></svg>
+    </button>
+    <button id="title-btn" class="topbar-title" type="button" title="Go to the cover">Verse</button>
+    <button id="write-btn" class="icon-btn" type="button" aria-label="Write a new verse">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 3.5C12.5 4 7 9.5 6 17.5"/><path d="M20 3.5c-.5 7-5.5 12.5-13.2 13.4"/><path d="M9.5 13.8 14.5 9"/><path d="M6 17.5 4 21"/></svg>
+    </button>
+  </header>
+
+  <main id="book" class="book" aria-label="Your book" aria-roledescription="book" tabindex="-1"></main>
+
+  <button id="turn-prev" class="turn turn--prev" type="button" aria-label="Previous page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+  </button>
+  <button id="turn-next" class="turn turn--next" type="button" aria-label="Next page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+  </button>
+
+  <section id="writer" class="writer" aria-label="Write" hidden>
+    <div id="writer-bar" class="writer-bar">
+      <button id="writer-close" class="text-btn" type="button">Close</button>
+      <span id="writer-status" class="writer-status">New verse</span>
+      <div class="writer-actions">
+        <button id="align-btn" class="icon-btn" type="button" aria-label="Line alignment: centred" aria-pressed="false">
+          <svg class="align-center" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M5 6h14M8 10h8M6 14h12M9 18h6"/></svg>
+          <svg class="align-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M5 6h14M5 10h8M5 14h12M5 18h6"/></svg>
+        </button>
+        <button id="bind-btn" class="pill-btn pill-btn--small" type="button">Add to book</button>
+      </div>
+    </div>
+    <div class="writer-sheet">
+      <label class="visually-hidden" for="poem-title">Title</label>
+      <input id="poem-title" class="title-input" type="text" placeholder="Untitled" maxlength="120" autocomplete="off" autocapitalize="words" enterkeyhint="next">
+      <div class="flourish" aria-hidden="true"></div>
+      <label class="visually-hidden" for="poem-body">Your verse</label>
+      <textarea id="poem-body" class="body-input" placeholder="Begin anywhere…" autocapitalize="sentences"></textarea>
+      <p id="writer-meta" class="writer-meta"></p>
+      <button id="delete-btn" class="quiet-btn" type="button">Delete this verse</button>
+    </div>
+  </section>
+
+  <dialog id="welcome" class="welcome" aria-labelledby="welcome-title">
+    <form id="welcome-form" class="welcome-inner" method="dialog">
+      <p class="welcome-kicker">Welcome to</p>
+      <h1 id="welcome-title" class="welcome-title">Verse</h1>
+      <div class="flourish" aria-hidden="true"></div>
+      <p class="welcome-lede">Write freely. Give each verse a title, or don’t. When a verse is ready, add it to your book and it becomes the next page.</p>
+      <p id="welcome-preview" class="welcome-note" hidden>This preview includes three sample verses so you can see the book take shape.</p>
+      <label class="field">
+        <span class="field-label">Your book is called</span>
+        <input id="welcome-book" type="text" placeholder="Verse" maxlength="80" autocomplete="off" autocapitalize="words">
+      </label>
+      <label class="field">
+        <span class="field-label">Written by</span>
+        <input id="welcome-author" type="text" placeholder="Your name" maxlength="80" autocomplete="name" autocapitalize="words">
+      </label>
+      <button class="pill-btn" type="submit">Open the book</button>
+    </form>
+  </dialog>
+
+  <dialog id="menu" class="sheet" aria-labelledby="menu-title">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <h2 id="menu-title" class="sheet-title">Verse</h2>
+    <ul class="menu-list">
+      <li><button class="menu-item" type="button" data-action="contents">Contents <small id="menu-count"></small></button></li>
+      <li><button class="menu-item" type="button" data-action="drafts">Loose pages <small id="menu-drafts"></small></button></li>
+      <li><button class="menu-item" type="button" data-action="settings">The book <small>title, name, type &amp; paper</small></button></li>
+      <li data-needs="files"><button class="menu-item" type="button" data-action="backup">Save a backup <small id="menu-backup"></small></button></li>
+      <li><button class="menu-item" type="button" data-action="restore">Restore a backup <small>from a saved file</small></button></li>
+      <li data-needs="print"><button class="menu-item" type="button" data-action="print">Print the book <small>or save as PDF</small></button></li>
+    </ul>
+    <p id="menu-note" class="sheet-note">Your verses are kept on this device. Save a backup now and then.</p>
+  </dialog>
+
+  <dialog id="drafts" class="sheet" aria-labelledby="drafts-title">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <h2 id="drafts-title" class="sheet-title">Loose pages</h2>
+    <p id="drafts-empty" class="sheet-note">Unfinished verses rest here until you add them to your book.</p>
+    <ul id="draft-list" class="draft-list"></ul>
+  </dialog>
+
+  <dialog id="settings" class="sheet" aria-labelledby="settings-title">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <h2 id="settings-title" class="sheet-title">The book</h2>
+    <form id="settings-form" class="settings" method="dialog">
+      <label class="field">
+        <span class="field-label">Title</span>
+        <input id="set-title" name="title" type="text" placeholder="Verse" maxlength="80" autocomplete="off" autocapitalize="words">
+      </label>
+      <label class="field">
+        <span class="field-label">Author</span>
+        <input id="set-author" name="author" type="text" placeholder="Your name" maxlength="80" autocomplete="name" autocapitalize="words">
+      </label>
+      <fieldset class="field">
+        <legend class="field-label">Typeface</legend>
+        <div class="seg">
+          <label><input type="radio" name="font" value="garamond"><span class="face-garamond">Garamond</span></label>
+          <label><input type="radio" name="font" value="typewriter"><span class="face-typewriter">Typewriter</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="field">
+        <legend class="field-label">Paper</legend>
+        <div class="seg">
+          <label><input type="radio" name="paper" value="sepia"><span><i class="swatch swatch--sepia" aria-hidden="true"></i>Sepia</span></label>
+          <label><input type="radio" name="paper" value="night"><span><i class="swatch swatch--night" aria-hidden="true"></i>Night</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="field">
+        <legend class="field-label">Text size</legend>
+        <div class="seg">
+          <label><input type="radio" name="size" value="s" aria-label="Small"><span class="size-s">Aa</span></label>
+          <label><input type="radio" name="size" value="m" aria-label="Medium"><span class="size-m">Aa</span></label>
+          <label><input type="radio" name="size" value="l" aria-label="Large"><span class="size-l">Aa</span></label>
+        </div>
+      </fieldset>
+      <button class="pill-btn settings-done" type="submit">Done</button>
+    </form>
+  </dialog>
+
+  <dialog id="confirm" class="sheet confirm" aria-labelledby="confirm-msg">
+    <p id="confirm-msg" class="confirm-msg"></p>
+    <div class="confirm-actions">
+      <button id="confirm-no" class="text-btn" type="button">Keep it</button>
+      <button id="confirm-yes" class="pill-btn pill-btn--danger" type="button">Delete</button>
+    </div>
+  </dialog>
+
+  <input id="restore-input" type="file" accept="application/json,.json" hidden>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="print-book" class="print-book" aria-hidden="true"></div>
+</body>
+</html>
