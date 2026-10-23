@@ -23,6 +23,27 @@
   src: url(fonts/eb-garamond-latin-500-normal.woff2) format('woff2');
 }
 @font-face {
+  font-family: 'EB Garamond';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(fonts/eb-garamond-latin-600-normal.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'EB Garamond';
+  font-style: italic;
+  font-weight: 600;
+  font-display: swap;
+  src: url(fonts/eb-garamond-latin-600-italic.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Courier Prime';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(fonts/courier-prime-latin-700-normal.woff2) format('woff2');
+}
+@font-face {
   font-family: 'Courier Prime';
   font-style: normal;
   font-weight: 400;
@@ -65,6 +86,7 @@
   --verse-size: 19px;
   --verse-scale: 1;
   --title-weight: 500;
+  --bold-weight: 600;
 
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
@@ -106,6 +128,7 @@
   --verse-font: var(--mono);
   --verse-scale: .84;
   --title-weight: 400;
+  --bold-weight: 700;
 }
 :root[data-size="s"] { --verse-size: 17px; }
 :root[data-size="l"] { --verse-size: 21.5px; }
@@ -1209,32 +1232,97 @@ button {
   text-align: center;
   text-transform: uppercase;
 }
-.title-input::placeholder,
-.body-input::placeholder {
+.title-input::placeholder {
   color: var(--muted);
   opacity: .75;
 }
 .writer-sheet .flourish { margin: 12px auto 28px; }
 
 .body-input {
+  position: relative;
   display: block;
   width: 100%;
   min-height: 30vh;
   padding: 0;
-  border: 0;
-  border-radius: 0;
   outline: none;
-  resize: none;
-  overflow: hidden;
-  background: transparent;
   color: var(--ink);
   caret-color: var(--accent);
   font-family: var(--verse-font);
   font-size: max(16px, calc(var(--verse-size) * var(--verse-scale)));
   line-height: 1.62;
   text-align: center;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 }
 .body-input.is-left { text-align: left; }
+.body-input.is-empty::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  inset: 0 0 auto;
+  color: var(--muted);
+  opacity: .75;
+  pointer-events: none;
+}
+
+/* Bold in a verse, wherever it shows */
+.body-input b,
+.body-input strong,
+.poem-body strong,
+.entry-excerpt strong { font-weight: var(--bold-weight); }
+
+/* Formatting bar, just above the keyboard */
+.writer.is-formatting .writer-sheet { padding-bottom: calc(96px + var(--safe-bottom)); }
+.format-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--keyboard-inset, 0px);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px max(12px, var(--safe-right)) calc(6px + var(--safe-bottom)) max(12px, var(--safe-left));
+  background: var(--paper);
+  border-top: 1px solid var(--rule);
+  box-shadow: 0 -6px 16px -10px rgb(var(--shadow) / .35);
+}
+.fmt-btn {
+  width: 46px;
+  height: 42px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--ink-soft);
+  transition: background-color .15s, color .15s;
+}
+.fmt-btn svg { width: 22px; height: 22px; }
+.fmt-btn[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.fmt-italic {
+  font-style: italic;
+  font-size: 23px;
+  line-height: 1;
+}
+.fmt-bold {
+  font-weight: 600;
+  font-size: 21px;
+  line-height: 1;
+}
+.fmt-hint {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 6px;
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--muted);
+}
 
 /* Margin notes under the verse: feeling, what it's about, where it lives */
 .details {

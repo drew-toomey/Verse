@@ -44,6 +44,8 @@
 
   const nowISO = () => new Date().toISOString();
   const str = (x) => (typeof x === 'string' ? x : '');
+  // Verse bodies mark *italic* and **bold**; a backslash keeps a literal * or \.
+  const escapeMarks = (text) => text.replace(/[\\*]/g, (c) => `\\${c}`);
   const uid = () =>
     (crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`);
 
@@ -75,7 +77,9 @@
     return {
       id: String(p.id),
       title: str(p.title),
-      body: str(p.body),
+      // Bodies saved before italics existed are plain text: keep their * and \ literal.
+      body: p.fmt ? str(p.body) : escapeMarks(str(p.body)),
+      fmt: 1,
       align: p.align === 'left' ? 'left' : 'center',
       feeling: feelingColour[p.feeling] ? p.feeling : null,
       kind: p.kind in KINDS ? p.kind : null,
@@ -227,14 +231,89 @@
   const countVerses = (n) => (n === 1 ? '1 verse' : `${n} verses`);
   const countVolumes = (n) => (n === 1 ? '1 volume' : `${n} volumes`);
 
-  const lines = (body) => body.split('\n').map((l) => l.trim()).filter(Boolean);
+  /* A verse body is text with light marks: *italic*, **bold**, and a backslash to keep
+     a literal * or \. Marks never run past the end of a line. */
+
+  // One marked line → runs of { text, i, b }.
+  function parseLine(line) {
+    const runs = [];
+    let i = false;
+    let b = false;
+    let text = '';
+    const push = () => {
+      if (text) runs.push({ text, i, b });
+      text = '';
+    };
+    for (let k = 0; k < line.length; k += 1) {
+      const c = line[k];
+      if (c === '\\' && k + 1 < line.length) {
+        k += 1;
+        text += line[k];
+      } else if (c === '*' && line[k + 1] === '*') {
+        push();
+        b = !b;
+        k += 1;
+      } else if (c === '*') {
+        push();
+        i = !i;
+      } else {
+        text += c;
+      }
+    }
+    push();
+    return runs;
+  }
+
+  // Runs → one marked line; the inverse of parseLine.
+  function markLine(runs) {
+    let out = '';
+    let i = false;
+    let b = false;
+    for (const r of runs) {
+      if (r.b !== b) { out += '**'; b = r.b; }
+      if (r.i !== i) { out += '*'; i = r.i; }
+      out += escapeMarks(r.text);
+    }
+    if (b) out += '**';
+    if (i) out += '*';
+    return out;
+  }
+
+  const plainLine = (line) => parseLine(line).map((r) => r.text).join('');
+  const plainOf = (body) => body.split('\n').map(plainLine).join('\n');
+  const isBlank = (line) => !plainLine(line).trim();
+
+  // A marked line as nodes, using the given tags for italic and bold.
+  function richLine(line, { em = 'em', strong = 'strong', trim = false } = {}) {
+    const runs = parseLine(line);
+    if (trim && runs.length) {
+      runs[0].text = runs[0].text.trimStart();
+      runs[runs.length - 1].text = runs[runs.length - 1].text.trimEnd();
+    }
+    return runs.filter((r) => r.text).map((r) => {
+      if (r.i && r.b) return h(strong, {}, h(em, { text: r.text }));
+      if (r.i) return h(em, { text: r.text });
+      if (r.b) return h(strong, { text: r.text });
+      return document.createTextNode(r.text);
+    });
+  }
+
+  // The lines of a verse as they appear on a page: no blank lines at either end.
+  function pageLines(body) {
+    const ls = body.split('\n');
+    while (ls.length && isBlank(ls[0])) ls.shift();
+    while (ls.length && isBlank(ls[ls.length - 1])) ls.pop();
+    return ls;
+  }
+  const richBody = (body) => pageLines(body).flatMap((line, k) => [k ? '\n' : null, ...richLine(line)]);
+
+  const lines = (body) => plainOf(body).split('\n').map((l) => l.trim()).filter(Boolean);
   function firstLine(body) {
     const line = lines(body)[0] || '';
     return line.length > 52 ? `${line.slice(0, 50).trimEnd()}…` : line;
   }
   const hasTitle = (p) => Boolean(p.title.trim());
   const displayTitle = (p) => p.title.trim() || firstLine(p.body) || 'Untitled';
-  const tidyBody = (body) => body.replace(/^\s*\n/, '').replace(/\s+$/, '');
   const feelingNote = (p) => [p.feeling, KINDS[p.kind]].filter(Boolean).join(' · ');
   const dot = (feeling) => h('i', { class: 'dot', style: feeling ? `--mood:${feelingColour[feeling]}` : null });
 
@@ -369,7 +448,7 @@
     if (filter === 'published') list = list.filter((p) => p.volumeId);
     if (q) {
       list = list.filter((p) =>
-        [p.title, p.body, p.feeling || '', KINDS[p.kind] || '', volumeById(p.volumeId)?.title || '']
+        [p.title, plainOf(p.body), p.feeling || '', KINDS[p.kind] || '', volumeById(p.volumeId)?.title || '']
           .join('\n').toLowerCase().includes(q));
     }
 
@@ -401,7 +480,8 @@
   function entryCard(p) {
     const d = new Date(p.createdAt);
     const vol = volumeById(p.volumeId);
-    const rest = lines(p.body).slice(hasTitle(p) ? 0 : 1).join(' / ');
+    const rest = p.body.split('\n').filter((l) => !isBlank(l)).slice(hasTitle(p) ? 0 : 1)
+      .flatMap((l, k) => [k ? ' / ' : null, ...richLine(l, { trim: true })]);
     const note = feelingNote(p);
     return h('li', {},
       h('button', { class: 'entry', type: 'button', onclick: () => openWriter(p.id) },
@@ -411,7 +491,7 @@
         ),
         h('span', { class: 'entry-main' },
           h('span', { class: `entry-title${hasTitle(p) ? '' : ' is-first-line'}`, text: displayTitle(p) }),
-          rest ? h('span', { class: 'entry-excerpt', text: rest }) : null,
+          rest.length ? h('span', { class: 'entry-excerpt' }, rest) : null,
           note || vol
             ? h('span', { class: 'entry-meta' },
               note ? h('span', { class: 'entry-feeling' }, p.feeling ? dot(p.feeling) : null, note) : null,
@@ -560,7 +640,7 @@
         hasTitle(p)
           ? h('h2', { class: 'poem-title', text: p.title.trim() })
           : h('div', { class: 'poem-mark', 'aria-hidden': 'true', text: '*' }),
-        h('p', { class: 'poem-body', text: tidyBody(p.body) }),
+        h('p', { class: 'poem-body' }, richBody(p.body)),
       ),
       h('footer', { class: 'page-foot' },
         h('span', { class: 'foot-when' },
@@ -709,9 +789,84 @@
     refreshWriterChrome();
   }
 
-  function growBody() {
-    bodyInput.style.height = 'auto';
-    bodyInput.style.height = `${bodyInput.scrollHeight}px`;
+  /* The verse editor holds one <div> per line with <i> and <b> inside, the same
+     shape the browser builds as you type. */
+
+  const BLOCKS = new Set(['DIV', 'P', 'LI', 'UL', 'OL', 'BLOCKQUOTE', 'PRE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6']);
+
+  // The editor's content → marked text. Tolerant of whatever the browser makes while
+  // editing: line <div>s, <br>s, <b>/<i>, <strong>/<em> and styled spans.
+  function readEditor() {
+    const out = [[]];
+    let pending = false; // a line break waiting for the next content
+    const add = (text, f) => {
+      if (pending) {
+        out.push([]);
+        pending = false;
+      }
+      const line = out[out.length - 1];
+      const last = line[line.length - 1];
+      if (last && last.i === f.i && last.b === f.b) last.text += text;
+      else line.push({ text, i: f.i, b: f.b });
+    };
+    const lineBreak = () => {
+      if (pending) out.push([]);
+      pending = true;
+    };
+    const walk = (node, f) => {
+      for (const child of node.childNodes) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          child.nodeValue.replace(/\u00a0/g, ' ').split('\n').forEach((part, k) => {
+            if (k) lineBreak();
+            if (part) add(part, f);
+          });
+        } else if (child.nodeType === Node.ELEMENT_NODE) {
+          if (child.tagName === 'BR') {
+            lineBreak();
+            continue;
+          }
+          const tag = child.tagName;
+          const { fontStyle, fontWeight } = child.style;
+          const next = {
+            i: fontStyle === 'italic' || (fontStyle !== 'normal' && (f.i || tag === 'I' || tag === 'EM')),
+            b: /^(bold|bolder|[6-9]00)$/.test(fontWeight)
+              || (!/^(normal|lighter|[1-5]00)$/.test(fontWeight) && (f.b || tag === 'B' || tag === 'STRONG')),
+          };
+          const block = BLOCKS.has(tag);
+          if (block && (pending || out[out.length - 1].length)) {
+            out.push([]);
+            pending = false;
+          }
+          walk(child, next);
+          if (block) pending = true;
+        }
+      }
+    };
+    walk(bodyInput, { i: false, b: false });
+    return out.map(markLine).join('\n');
+  }
+
+  function fillEditor(body) {
+    bodyInput.replaceChildren(...(body || '').split('\n').map((line) => {
+      const nodes = richLine(line, { em: 'i', strong: 'b' });
+      return h('div', {}, nodes.length ? nodes : h('br'));
+    }));
+    markEmpty();
+  }
+
+  const editorBody = () => readEditor();
+  function markEmpty() {
+    bodyInput.classList.toggle('is-empty', !bodyInput.textContent.trim());
+  }
+
+  function focusEditorEnd() {
+    bodyInput.focus({ preventScroll: true });
+    const range = document.createRange();
+    range.selectNodeContents(bodyInput);
+    range.collapse(false);
+    const sel = getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
   }
 
   function setAlign(value) {
@@ -738,9 +893,10 @@
       $('#placement-btn').textContent = 'Publish';
     }
 
-    const text = bodyInput.value.trim();
+    const body = editorBody();
+    const text = plainOf(body).trim();
     const words = text ? text.split(/\s+/).length : 0;
-    const count = lines(bodyInput.value).length;
+    const count = lines(body).length;
     $('#writer-meta').textContent = words
       ? `${count === 1 ? '1 line' : `${count} lines`} · ${words === 1 ? '1 word' : `${words} words`} · saved as you write`
       : 'Saved as you write';
@@ -753,20 +909,19 @@
     context = volumeId || current?.volumeId || (view === 'volume' ? openVol : null);
     changed = false;
     titleInput.value = current ? current.title : '';
-    bodyInput.value = current ? current.body : '';
+    fillEditor(current ? current.body : '');
     draft = { align: 'center', feeling: current?.feeling || null, kind: current?.kind || null };
     setAlign(current ? current.align : state.prefs.align);
     renderChoices();
     if (prefill) {
       titleInput.value = prefill.title;
-      bodyInput.value = prefill.body;
+      fillEditor(escapeMarks(prefill.body));
       persist();
     }
 
     writer.hidden = false;
     document.body.classList.add('is-writing');
     window.scrollTo(0, 0);
-    growBody();
     refreshWriterChrome();
     holdHistory();
     if (!id) bodyInput.focus({ preventScroll: true });
@@ -775,12 +930,12 @@
   function persist() {
     clearTimeout(saveTimer);
     const title = titleInput.value;
-    const body = bodyInput.value;
+    const body = editorBody();
     const { align, feeling, kind } = draft;
     if (!current) {
-      if (!title.trim() && !body.trim()) return;
+      if (!title.trim() && !plainOf(body).trim()) return;
       const stamp = nowISO();
-      current = { id: uid(), title, body, align, feeling, kind, createdAt: stamp, updatedAt: stamp, volumeId: null, publishedAt: null };
+      current = { id: uid(), title, body, fmt: 1, align, feeling, kind, createdAt: stamp, updatedAt: stamp, volumeId: null, publishedAt: null };
       state.verses.push(current);
     } else if (current.title === title && current.body === body && current.align === align
       && current.feeling === feeling && current.kind === kind) {
@@ -815,14 +970,14 @@
   function closeWriter() {
     if (!isWriting()) return;
     persist();
-    if (current && current.volumeId && !current.body.trim()) {
+    if (current && current.volumeId && !plainOf(current.body).trim()) {
       toast('A page needs at least one line. Delete it instead?');
       bodyInput.focus();
       holdHistory();
       return;
     }
     let message = '';
-    if (current && !current.title.trim() && !current.body.trim()) removeVerse(current.id);
+    if (current && !current.title.trim() && !plainOf(current.body).trim()) removeVerse(current.id);
     else if (current && !current.volumeId && changed) message = 'Saved in your journal';
     const verse = current;
     current = null;
@@ -838,7 +993,7 @@
 
   function openPublish() {
     persist();
-    if (!bodyInput.value.trim() || !current) {
+    if (!plainOf(editorBody()).trim() || !current) {
       refreshWriterChrome();
       toast('Write a line or two first.');
       bodyInput.focus();
@@ -918,10 +1073,80 @@
   titleInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      bodyInput.focus();
+      focusEditorEnd();
     }
   });
-  bodyInput.addEventListener('input', () => { growBody(); schedulePersist(); });
+  bodyInput.addEventListener('input', () => {
+    markEmpty();
+    schedulePersist();
+  });
+  // Pasted text arrives plain, so it can't bring along fonts or colours.
+  bodyInput.addEventListener('paste', (e) => {
+    e.preventDefault();
+    document.execCommand('insertText', false, e.clipboardData.getData('text/plain'));
+  });
+  bodyInput.addEventListener('drop', (e) => e.preventDefault());
+
+  /* Formatting bar: sits above the keyboard while you write the verse. */
+
+  const formatBar = $('#format-bar');
+  let savedRange = null;
+
+  function syncFormatBar() {
+    for (const b of formatBar.querySelectorAll('[data-cmd="italic"], [data-cmd="bold"]')) {
+      let on = false;
+      try { on = document.queryCommandState(b.dataset.cmd); } catch { /* ignore */ }
+      b.setAttribute('aria-pressed', String(on));
+    }
+  }
+
+  document.addEventListener('selectionchange', () => {
+    const sel = getSelection();
+    if (!sel.rangeCount || !bodyInput.contains(sel.anchorNode)) return;
+    savedRange = sel.getRangeAt(0).cloneRange();
+    syncFormatBar();
+  });
+
+  bodyInput.addEventListener('focus', () => {
+    formatBar.hidden = false;
+    writer.classList.add('is-formatting');
+    syncFormatBar();
+  });
+  bodyInput.addEventListener('blur', () => {
+    formatBar.hidden = true;
+    writer.classList.remove('is-formatting');
+  });
+
+  for (const b of formatBar.querySelectorAll('.fmt-btn')) {
+    // Keep the keyboard up and the words selected while tapping a button.
+    b.addEventListener('mousedown', (e) => e.preventDefault());
+    b.addEventListener('click', () => {
+      if (document.activeElement !== bodyInput) {
+        bodyInput.focus({ preventScroll: true });
+        if (savedRange) {
+          const sel = getSelection();
+          sel.removeAllRanges();
+          sel.addRange(savedRange);
+        }
+      }
+      document.execCommand(b.dataset.cmd, false);
+      haptic();
+      markEmpty();
+      syncFormatBar();
+      schedulePersist();
+    });
+  }
+
+  // On phones the keyboard covers the bottom of the screen; keep the bar just above it.
+  if (window.visualViewport) {
+    const vv = window.visualViewport;
+    const place = () => {
+      const covered = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      document.documentElement.style.setProperty('--keyboard-inset', `${covered}px`);
+    };
+    vv.addEventListener('resize', place);
+    vv.addEventListener('scroll', place);
+  }
   alignBtn.addEventListener('click', () => {
     setAlign(draft.align === 'left' ? 'center' : 'left');
     state.prefs.align = draft.align;
@@ -1222,7 +1447,7 @@
       h('section', { class: 'pb-page' },
         h('div', { class: `poem poem--${p.align}` },
           hasTitle(p) ? h('h2', { class: 'poem-title', text: p.title.trim() }) : h('div', { class: 'poem-mark', text: '*' }),
-          h('p', { class: 'poem-body', text: tidyBody(p.body) }),
+          h('p', { class: 'poem-body' }, richBody(p.body)),
         ),
         h('p', { class: 'pb-folio', text: String(i + 1) }),
       ),
@@ -1293,12 +1518,12 @@
     const summer = vol('Summer, Remembered', 'bottle', 'Places I keep going back to.', 45);
     state.volumes.push(mornings, weather, summer);
     const verse = (title, align, feeling, kind, daysAgo, volume, body) => ({
-      id: uid(), title, body, align, feeling, kind, createdAt: at(daysAgo), updatedAt: at(daysAgo),
+      id: uid(), title, body, fmt: 1, align, feeling, kind, createdAt: at(daysAgo), updatedAt: at(daysAgo),
       volumeId: volume ? volume.id : null, publishedAt: volume ? at(daysAgo, 1) : null,
     });
     state.verses.push(
       verse('Elm Street', 'center', 'wistful', 'memory', 30, summer,
-        'My grandmother’s kitchen\nsmelled of bread and bleach,\nand the radio was always\na little too loud,\n\nas if she wanted the whole street\nto know\nthat someone in this house\nwas still singing.'),
+        'My grandmother’s kitchen\nsmelled of bread and bleach,\nand the radio was always\na little too loud,\n\nas if she wanted the whole street\nto know\nthat someone in this house\nwas *still* singing.'),
       verse('Morning Pages', 'center', 'grateful', 'moment', 12, mornings,
         'The kettle knows\nbefore I do\nthat the day has started.\n\nI sit with the steam\nand the small loud quiet\nof a house still sleeping,\n\nand write one true line\nbefore the world\nasks me for anything.'),
       verse('', 'left', 'hopeful', 'thought', 8, weather,
