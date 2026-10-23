@@ -1,6 +1,6 @@
 /* Verse offline support: keeps a copy of the app on the phone so it opens without a connection.
    Bump VERSION whenever any file below changes, so phones pick up the new copy. */
-const VERSION = 'verse-v3';
+const VERSION = 'verse-v4';
 const FILES = [
   './',
   './index.html',
@@ -10,8 +10,11 @@ const FILES = [
   './fonts/eb-garamond-latin-400-normal.woff2',
   './fonts/eb-garamond-latin-400-italic.woff2',
   './fonts/eb-garamond-latin-500-normal.woff2',
+  './fonts/eb-garamond-latin-600-normal.woff2',
+  './fonts/eb-garamond-latin-600-italic.woff2',
   './fonts/courier-prime-latin-400-normal.woff2',
   './fonts/courier-prime-latin-400-italic.woff2',
+  './fonts/courier-prime-latin-700-normal.woff2',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',

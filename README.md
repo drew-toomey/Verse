@@ -5,6 +5,7 @@ A journal in verse, with a shelf of books you fill yourself.
 Every verse you write goes into your **journal**: dated, with how you were feeling, and whether it's about a moment, a thought or a memory. When a verse is finished, **publish** it to a **volume** on your shelf. A volume is a cloth-bound book for a topic, a season, a person or a time in your life, and each verse you publish becomes its next page.
 
 - **Write quickly**: the quill button opens a blank page with the keyboard up. Line breaks, stanzas and indents stay exactly as you type them, lines can be centred or left-aligned, and everything saves as you write.
+- **Italic and bold**: while you write, a bar above the keyboard has **I**, **B**, undo and redo. Select words and tap, or tap first and then type. Formatting shows on the page, in the journal and in print.
 - **How you felt**: one tap from twelve feelings (joyful, grateful, hopeful, calm, tender, in love, wistful, lonely, sad, anxious, angry, numb), plus *a moment*, *a thought* or *a memory*.
 - **Journal**: every verse, newest first, grouped by month with a row of feeling dots for each month. Search by any word or feeling, or show only what's unpublished.
 - **Shelf**: your volumes as a grid of covers on pine shelves, in oxblood, burgundy, honey leather, teal, sage, bottle green, olive or ivory. Sort by most recent or by title.
@@ -20,7 +21,7 @@ Your verses are stored on your phone only. They never go to this repository or a
 Verse is built for a Pixel (or any Android phone) running Chrome. Installed from Chrome, Android packages it as a real app: it has its own icon in the app drawer and on the home screen, appears in Settings → Apps, opens full screen and works offline. No Play Store needed.
 
 1. **Host it with GitHub Pages.** In this repository go to **Settings → Pages**, set **Source** to *Deploy from a branch*, choose `main` and `/ (root)`, then save. After a minute it's live at `https://drew-toomey.github.io/Verse/`.
-   GitHub Pages is free for public repositories. This repository is private, so either make it public (safe, because only the app's code is here, never your poems) or use a GitHub Pro account.
+   GitHub Pages is free for public repositories. Making the repository public is safe: only the app's code is here, never your poems.
 2. **Install it.** On your Pixel, open that address in **Chrome** and tap **Install** on the card at the top of the journal (or open Chrome's **⋮** menu and choose **Install app**).
 
 Once installed:
@@ -49,4 +50,4 @@ npx serve .        # then open http://localhost:3000
 | `manifest.webmanifest`, `icons/`, `screenshots/` | How Android installs it: name, icons, the *Write a verse* shortcut, the Share target and the install screenshots |
 | `fonts/` | EB Garamond and Courier Prime (SIL Open Font License) |
 
-When you change any file, bump `VERSION` in `sw.js` (for example `verse-v3`) so installed copies pick up the update the next time they open.
+When you change any file, bump `VERSION` in `sw.js` (for example `verse-v5`) so installed copies pick up the update the next time they open.

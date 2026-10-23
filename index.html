@@ -121,8 +121,7 @@
       <label class="visually-hidden" for="poem-title">Title</label>
       <input id="poem-title" class="title-input" type="text" placeholder="Untitled" maxlength="120" autocomplete="off" autocapitalize="words" enterkeyhint="next">
       <div class="flourish" aria-hidden="true"></div>
-      <label class="visually-hidden" for="poem-body">Your verse</label>
-      <textarea id="poem-body" class="body-input" placeholder="Begin anywhere…" autocapitalize="sentences"></textarea>
+      <div id="poem-body" class="body-input is-empty" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Your verse" data-placeholder="Begin anywhere…" autocapitalize="sentences" spellcheck="true"></div>
 
       <div class="details">
         <p class="details-label" id="feelings-label">How were you feeling?</p>
@@ -136,6 +135,17 @@
         <p id="writer-meta" class="writer-meta"></p>
         <button id="delete-btn" class="quiet-btn" type="button">Delete this verse</button>
       </div>
+    </div>
+    <div id="format-bar" class="format-bar" role="toolbar" aria-label="Formatting" hidden>
+      <button class="fmt-btn" type="button" data-cmd="italic" aria-label="Italic" aria-pressed="false"><span class="fmt-italic" aria-hidden="true">I</span></button>
+      <button class="fmt-btn" type="button" data-cmd="bold" aria-label="Bold" aria-pressed="false"><span class="fmt-bold" aria-hidden="true">B</span></button>
+      <span class="fmt-hint">Select words, then tap</span>
+      <button class="fmt-btn" type="button" data-cmd="undo" aria-label="Undo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7 4.5 11.5 9 16"/><path d="M5 11.5h9.5a5 5 0 0 1 0 10H11"/></svg>
+      </button>
+      <button class="fmt-btn" type="button" data-cmd="redo" aria-label="Redo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 7l4.5 4.5L15 16"/><path d="M19 11.5H9.5a5 5 0 0 0 0 10H13"/></svg>
+      </button>
     </div>
   </section>
 
